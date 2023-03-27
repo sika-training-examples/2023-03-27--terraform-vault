@@ -33,3 +33,29 @@ resource "vault_kv_secret_v2" "db-creds" {
     }
   )
 }
+
+resource "vault_mount" "database" {
+  path = "database"
+  type = "database"
+}
+
+resource "vault_database_secret_backend_connection" "postgres" {
+  backend = vault_mount.database.path
+  name    = "postgres"
+  allowed_roles = [
+    "dev",
+  ]
+
+  postgresql {
+    connection_url = "postgresql://{{username}}:{{password}}@127.0.0.1:5432/postgres?sslmode=disable"
+    username       = "postgres"
+    password       = "pg"
+  }
+}
+
+resource "vault_database_secret_backend_role" "postgres-dev" {
+  backend             = vault_mount.database.path
+  name                = "dev"
+  db_name             = vault_database_secret_backend_connection.postgres.name
+  creation_statements = ["CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';"]
+}
