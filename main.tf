@@ -22,3 +22,14 @@ resource "vault_mount" "bar" {
   path = "bar"
   type = "kv-v2"
 }
+
+resource "vault_kv_secret_v2" "db-creds" {
+  mount = vault_mount.bar.path
+  name  = "db-creds"
+  data_json = jsonencode(
+    {
+      user     = "postgres",
+      password = "pg",
+    }
+  )
+}
